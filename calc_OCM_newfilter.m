@@ -1,5 +1,3 @@
-%function [peakV] = calc_OCM_newfilter(stack,Tstep,Twin,Nb,taper,Smask,v,k,f,gf,gk,minvar,maxskew,minent)
-%function [peakV, varB, skewB, entB] = calc_OCM_newfilter(stack,Tstep,Twin,Nb,taper,Smask,v,k,f,gf,gk)
 function [peakV, varB] = calc_OCM_newfilter(stack,Tstep,Twin,Nb,taper,Smask,v,k,f,gf,gk,maxskew,minent)
     
 j = 1;
@@ -19,9 +17,9 @@ for wind = 0:(Nb-1)
     skewB = skewness(block(:));
     entB = entropy(rescale(block));
 
-    if skewB > maxskew || entB < minent
-        peakV(j) = NaN;
-    else
+%     if skewB > maxskew || entB < minent
+%         peakV(j) = NaN;
+%     else
         
         block = block-repmat(mean(block),Twin,1); %remove mean from block
         
@@ -92,7 +90,7 @@ for wind = 0:(Nb-1)
         %             drawnow
         %         end
         %     end
-    end
+%     end
     
     j = j+1;
     

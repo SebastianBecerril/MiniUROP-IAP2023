@@ -18,10 +18,6 @@ if skipChecks == false
 end
 
 %% PREPARE IMAGES
-[icp, beta0] = getCameraParams(infoOCM.expID); %import camera info
-[U, V] = meshgrid(0:icp.NU-1, 0:icp.NV-1);  %find U, V coordinates
-[X_raw, Y_raw, ~] = getXYZfromUV(U, V, icp, beta0, 0, '-z');    %find FRF X, Y coordinates
-
 imp_source = dir(strcat(infoOCM.importDir, '/*.', infoOCM.imp_format)); %find all videos in source folder
 
 %check for bad files
@@ -36,12 +32,11 @@ end
 imp_name = {imp_source.name}';  %cell array of video names
 imp_read = strcat({imp_source.folder},'/',{imp_source.name})';  %string of each video location
 
-time_source = dir(strcat(infoOCM.importDir, '/*.', 'xml')); %find all videos in source folder
-time_read = strcat({time_source.folder},'/',{time_source.name})';  %string of each video location
-
 vd = VideoReader(imp_read{1});
 
 oceanRaw = double(rgb2gray(read(vd,1)));
+
+%add code here to rotate/scale/offset to X_raw Y_raw
 
 if skipChecks == false
     %show proposed crop
@@ -60,10 +55,9 @@ if skipChecks == false
     pause
 end
 
+%may need to edit/delete next two lines
 [oceanX, oceanY] = meshgrid(infoOCM.X_min:infoOCM.X_res:infoOCM.X_max,infoOCM.Y_min:infoOCM.Y_res:infoOCM.Y_max);   %define image grid
-[Uint, Vint] = getUVfromXYZ(oceanX, oceanY, zeros(size(oceanX)), icp, beta0);
-
-oceanGrid = interp2(U, V, oceanRaw, Uint, Vint, 'linear', nan);
+oceanGrid = interp2(X_raw, Y_raw, oceanRaw, oceanX, oceanY, 'linear', nan);
 
 disp('Image preparation complete!')
 toc     %display elapsed time
@@ -77,18 +71,14 @@ end
 Cs_barPixel = infoOCM.Cs_bar/infoOCM.X_res;
 Al_barPixel = infoOCM.Al_bar/infoOCM.Y_res;
 
-
 sc = 0;  %start counter
 if autoLocate == true
-    %stack_Xstart = (((infoOCM.X_min:infoOCM.X_gap:(infoOCM.X_max-infoOCM.Cs_bar/2))-infoOCM.X_min)/infoOCM.X_res)+1;
-    %stack_Ystart = (((infoOCM.Y_min:infoOCM.Y_gap:(infoOCM.Y_max-infoOCM.Al_bar/2))-infoOCM.Y_min)/infoOCM.Y_res)+1;
-    %[xOCM,yOCM] = meshgrid(
-elseif strcmp(infoOCM.expID,'rod13')
-    pivX = 76.6:3.2:249.4;
-    pivY = 588.8:3.2:998.4;
-    stack_Xstart = round((((pivX)-infoOCM.X_min)/infoOCM.X_res)+1);
-    stack_Ystart = round((((pivY)-infoOCM.Y_min)/infoOCM.Y_res)+1);
-    [xOCM,yOCM] = meshgrid(pivX,pivY);
+    start_X = (infoOCM.X_min:infoOCM.X_gap:(infoOCM.X_max-infoOCM.Cs_bar/2));
+    start_Y = (infoOCM.Y_min:infoOCM.Y_gap:(infoOCM.Y_max-infoOCM.Al_bar/2));
+    [xOCM,yOCM] = meshgrid(start_X,start_Y);
+    
+    stack_Xstart = round((((start_X)-infoOCM.X_min)/infoOCM.X_res)+1);
+    stack_Ystart = round((((start_Y)-infoOCM.Y_min)/infoOCM.Y_res)+1);
 end
 
 %fix indexing outside array issues
@@ -114,9 +104,6 @@ for w = stack_Xstart
     end
 end
 
-%load NAVD water level
-[z,tz] = getWaterLevel(expID);
-
 %% IMPORT AND ANALYZE
 uOCM = [];
 vOCM = [];
@@ -126,13 +113,6 @@ vVar = [];
 tOCM = [];
 %load and grid images into ocean array
 for j = 1:length(imp_read)
-    %generate time
-    fid = fopen(time_read{j});
-    l = fgetl(fid);
-    fclose(fid);
-    startTimeStr = regexp(l, '(?<=<StartTime>).*(?=</StartTime>)', 'match');
-    startTime = datetime(startTimeStr{1}, 'InputFormat', 'yyyy-MM-dd''T''HH:mm:ss.SSSSSS''Z''', 'TimeZone', 'UTC', 'Format', 'yyyy-MM-dd HH:mm:ss.SSSS');
-    
     if stackData == false && isfile(strcat(infoOCM.workingDir,'/rawData_OCM_',infoOCM.tag,'_',imp_name{j}(1:end-4),'.mat'))
         %still needs work, doesn't need to load in data if analysis is already
         %completed... need to take up a level to link with analyze_OCM
@@ -152,16 +132,13 @@ for j = 1:length(imp_read)
         samp = round(vdHz/infoOCM.ocm_freq);
         frms = 1:samp:vd.NumFrames;
         M = length(frms);
-        
-        %added to try to include z coordinate
-        z_stp =  interp1(tz,z,startTime+seconds(vdDr/2));
-        [Ustp, Vstp] = getUVfromXYZ(oceanX, oceanY, z_stp*ones(size(oceanX)), icp, beta0);
 
         %load in each image and interpolate to grid
         ocean = NaN(size(oceanGrid,1),size(oceanGrid,2),M); %preallocate ocean array
         for ii = 1:M %loop through image set
             oceanRaw = double(rgb2gray(read(vd,frms(ii))));    %read in image
-            ocean(:,:,ii) = interp2(U, V, oceanRaw, Ustp, Vstp, 'linear', nan);
+            %add code here to rotate/scale/offset to X_raw Y_raw
+            ocean(:,:,ii) = interp2(X_raw, Y_raw, oceanRaw, oceanX, oceanY, 'linear', nan);
         end
         %sum images into composite
         oceanSum = sum(ocean,3);
@@ -242,7 +219,7 @@ for j = 1:length(imp_read)
     Nb = floor((size(stkCs_cell{1},1)-(Twin-Tstep))/Tstep); %blocks
     
     %finalize time    
-    tOCM_i = (startTime + seconds((infoOCM.stp:infoOCM.stp:(infoOCM.stp*Nb))));
+    tOCM_i = seconds((infoOCM.stp:infoOCM.stp:(infoOCM.stp*Nb)));
     
     
     %% GENERATE RESULTS
