@@ -36,7 +36,27 @@ vd = VideoReader(imp_read{1});
 
 oceanRaw = double(rgb2gray(read(vd,1)));
 
-%add code here to rotate/scale/offset to X_raw Y_raw
+%start incorporated code
+height = size(oceanRaw, 1);
+width = size(oceanRaw, 2);
+
+y_pixel = -(1:(height));
+x_pixel = 1:(width);
+[X_pixel,Y_pixel] = meshgrid(x_pixel,y_pixel);
+
+ang2 = 278.5;
+X_rot = X_pixel*cosd(ang2)-Y_pixel*sind(ang2);
+Y_rot = X_pixel*sind(ang2)+Y_pixel*cosd(ang2);
+
+offset_x = 2832.21-87.3912 +(95.19/0.018); %+ (104.446/0.002647)
+offset_y = 4133.8-16.7108+(575.803/0.018);%610.861/0.002647
+X_ro = X_rot + offset_x;
+Y_ro = Y_rot + offset_y;
+
+scale_factor = 0.018; %0.002647
+X_raw = X_ro*scale_factor;
+Y_raw = Y_ro*scale_factor;
+%end incorporated code
 
 if skipChecks == false
     %show proposed crop
@@ -55,9 +75,11 @@ if skipChecks == false
     pause
 end
 
-%may need to edit/delete next two lines
+%start incorporated code
+ocean_interp = scatteredInterpolant(X_raw(:),Y_raw(:),oceanRaw(:),'linear','none');
 [oceanX, oceanY] = meshgrid(infoOCM.X_min:infoOCM.X_res:infoOCM.X_max,infoOCM.Y_min:infoOCM.Y_res:infoOCM.Y_max);   %define image grid
-oceanGrid = interp2(X_raw, Y_raw, oceanRaw, oceanX, oceanY, 'linear', nan);
+oceanGrid = ocean_interp(oceanX, oceanY);
+%end incorporated code
 
 disp('Image preparation complete!')
 toc     %display elapsed time
@@ -139,8 +161,10 @@ for j = 1:length(imp_read)
         ocean = NaN(size(oceanGrid,1),size(oceanGrid,2),M); %preallocate ocean array
         for ii = 1:M %loop through image set
             oceanRaw = double(rgb2gray(read(vd,frms(ii))));    %read in image
-            %add code here to rotate/scale/offset to X_raw Y_raw
-            ocean(:,:,ii) = interp2(X_raw, Y_raw, oceanRaw, oceanX, oceanY, 'linear', nan);
+            %start incorporated code
+            ocean_interp.Values = oceanRaw;
+            ocean(:,:,ii) = ocean_interp(oceanX, oceanY);
+            %end incorporated code
         end
         %sum images into composite
         oceanSum = sum(ocean,3);
