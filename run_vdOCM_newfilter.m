@@ -48,14 +48,14 @@ ang2 = 278.5;
 X_rot = X_pixel*cosd(ang2)-Y_pixel*sind(ang2);
 Y_rot = X_pixel*sind(ang2)+Y_pixel*cosd(ang2);
 
-offset_x = 2832.21-87.3912 +(95.19/0.018); %+ (104.446/0.002647)
+offset_x = 2832.21-87.3912 +(85.19/0.018); %+ (104.446/0.002647)
 offset_y = 4133.8-16.7108+(575.803/0.018);%610.861/0.002647
-X_ro = X_rot + offset_x;
-Y_ro = Y_rot + offset_y;
+X = X_rot + offset_x;
+Y = Y_rot + offset_y;
 
 scale_factor = 0.018; %0.002647
-X_raw = X_ro*scale_factor;
-Y_raw = Y_ro*scale_factor;
+X_raw = X*scale_factor;
+Y_raw = Y*scale_factor;
 %end incorporated code
 
 if skipChecks == false
@@ -162,7 +162,7 @@ for j = 1:length(imp_read)
         for ii = 1:M %loop through image set
             oceanRaw = double(rgb2gray(read(vd,frms(ii))));    %read in image
             %start incorporated code
-            ocean_interp.Values = oceanRaw;
+            ocean_interp.Values = oceanRaw(:); %Added the (:) due to an error given
             ocean(:,:,ii) = ocean_interp(oceanX, oceanY);
             %end incorporated code
         end
@@ -265,13 +265,13 @@ for j = 1:length(imp_read)
     end
     
     %% COMBINE RESULTS
-    uOCM_i = NaN(length(pivY),length(pivX),Nb);
-    vOCM_i = NaN(length(pivY),length(pivX),Nb);
+    uOCM_i = NaN(length(startY),length(startX),Nb);
+    vOCM_i = NaN(length(startY),length(startX),Nb);
     
-    vVar_i = NaN(length(pivY),length(pivX),Nb);
-    uVar_i = NaN(length(pivY),length(pivX),Nb);
-    for i = 1:length(pivY)
-        for h = 1:length(pivX)
+    vVar_i = NaN(length(startY),length(startX),Nb);
+    uVar_i = NaN(length(startY),length(startX),Nb);
+    for i = 1:length(startY)
+        for h = 1:length(startX)
             for k = 1:size(xy_OCM,1)
                 if abs(xOCM(i,h)-xy_OCM(k,1)) < 0.1 && abs(yOCM(i,h)-xy_OCM(k,2)) < 0.1
                     uOCM_i(i,h,:) = u_OCM_i(k,:);
