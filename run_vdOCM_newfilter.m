@@ -56,6 +56,19 @@ Y = Y_rot + offset_y;
 scale_factor = 0.018; %0.002647
 X_raw = X*scale_factor;
 Y_raw = Y*scale_factor;
+
+[oceanX, oceanY] = meshgrid(infoOCM.X_min:infoOCM.X_res:infoOCM.X_max,infoOCM.Y_min:infoOCM.Y_res:infoOCM.Y_max);   %define image grid
+
+oceanU_start = oceanX/scale_factor;
+oceanV_start = oceanY/scale_factor;
+
+oceanU_int = oceanU_start - offset_x;
+oceanV_int = oceanV_start - offset_y;
+
+oceanU_final = oceanU_int*cosd(-ang2)-oceanV_int*sind(-ang2);
+oceanV_final = oceanU_int*sind(-ang2)+oceanV_int*cosd(-ang2);
+
+oceanGrid = interp2(X_pixel,Y_pixel,oceanRaw,oceanU_final,oceanV_final,'linear',nan);
 %end incorporated code
 
 if skipChecks == false
@@ -74,12 +87,6 @@ if skipChecks == false
     disp('Press any key to continue...');
     pause
 end
-
-%start incorporated code
-ocean_interp = scatteredInterpolant(X_raw(:),Y_raw(:),oceanRaw(:),'linear','none');
-[oceanX, oceanY] = meshgrid(infoOCM.X_min:infoOCM.X_res:infoOCM.X_max,infoOCM.Y_min:infoOCM.Y_res:infoOCM.Y_max);   %define image grid
-oceanGrid = ocean_interp(oceanX, oceanY);
-%end incorporated code
 
 disp('Image preparation complete!')
 toc     %display elapsed time
@@ -159,13 +166,16 @@ for j = 1:length(imp_read)
 
         %load in each image and interpolate to grid
         ocean = NaN(size(oceanGrid,1),size(oceanGrid,2),M); %preallocate ocean array
+
+        hWait = waitbar(0, 'Loading and interpolating frames...');
         for ii = 1:M %loop through image set
             oceanRaw = double(rgb2gray(read(vd,frms(ii))));    %read in image
             %start incorporated code
-            ocean_interp.Values = oceanRaw(:); %Added the (:) due to an error given
-            ocean(:,:,ii) = ocean_interp(oceanX, oceanY);
+            ocean(:,:,ii) = interp2(X_pixel,Y_pixel,oceanRaw,oceanU_final,oceanV_final,'linear',nan);
             %end incorporated code
+            waitbar(ii/M, hWait);
         end
+        delete(hWait)
         %sum images into composite
         oceanSum = sum(ocean,3);
         
@@ -265,13 +275,13 @@ for j = 1:length(imp_read)
     end
     
     %% COMBINE RESULTS
-    uOCM_i = NaN(length(startY),length(startX),Nb);
-    vOCM_i = NaN(length(startY),length(startX),Nb);
+    uOCM_i = NaN(length(start_Y),length(start_X),Nb);
+    vOCM_i = NaN(length(start_Y),length(start_X),Nb);
     
-    vVar_i = NaN(length(startY),length(startX),Nb);
-    uVar_i = NaN(length(startY),length(startX),Nb);
-    for i = 1:length(startY)
-        for h = 1:length(startX)
+    vVar_i = NaN(length(start_Y),length(start_X),Nb);
+    uVar_i = NaN(length(start_Y),length(start_X),Nb);
+    for i = 1:length(start_Y)
+        for h = 1:length(start_X)
             for k = 1:size(xy_OCM,1)
                 if abs(xOCM(i,h)-xy_OCM(k,1)) < 0.1 && abs(yOCM(i,h)-xy_OCM(k,2)) < 0.1
                     uOCM_i(i,h,:) = u_OCM_i(k,:);
