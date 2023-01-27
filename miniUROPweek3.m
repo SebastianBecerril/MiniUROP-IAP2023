@@ -1,6 +1,6 @@
 % Loading optimized parameter data with autoLocate off
-load C:\Users\sebas\Documents\miniUROPData\results_OCM_DRONEV1_0125_03_new_params.mat
-load C:\Users\sebas\Documents\miniUROPData\timex_OCM_DRONEV1_0125_03_new_params_DJI_0441.mat
+load('/Users/ciara/Dropbox (MIT)/MIT-WHOI/mini UROP/Data/results_OCM_DRONEV1_0125_03_new_params.mat')
+load('/Users/ciara/Dropbox (MIT)/MIT-WHOI/mini UROP/Data/timex_OCM_DRONEV1_0125_03_new_params_DJI_0441.mat')
 
 U_optimized = uOCM; %this is the cross-shore (perpendicular to the shore velocity measured by the PIV algorithm)
 V_optimized = vOCM; %this is the alongshore (parallel to the shore velocity measured by the PIV algorithm)
@@ -9,8 +9,8 @@ Y_optimized = yOCM; %this is the local y-coordinate of the flow velocity
 time_optimized = tOCM;
 
 % Loading initial parameter data with autoLocate off
-load C:\Users\sebas\Documents\miniUROPData\results_OCM_DRONEV1_0125_04_old_params.mat
-load C:\Users\sebas\Documents\miniUROPData\timex_OCM_DRONEV1_0125_04_old_params_DJI_0441.mat
+load('/Users/ciara/Dropbox (MIT)/MIT-WHOI/mini UROP/Data/results_OCM_DRONEV1_0125_04_old_params.mat')
+load('/Users/ciara/Dropbox (MIT)/MIT-WHOI/mini UROP/Data/timex_OCM_DRONEV1_0125_04_old_params_DJI_0441.mat')
 
 U_original = uOCM; %this is the cross-shore (perpendicular to the shore velocity measured by the PIV algorithm)
 V_original = vOCM; %this is the alongshore (parallel to the shore velocity measured by the PIV algorithm)
@@ -19,7 +19,7 @@ Y_original = yOCM; %this is the local y-coordinate of the flow velocity
 time_original = tOCM;
 
 % Loading fixed camera data
-load C:\Users\sebas\Downloads\results_OCM_fixedcameras_0910_0916thru0921.mat
+load('/Users/ciara/Dropbox (MIT)/MIT-WHOI/mini UROP/Data/results_OCM_fixedcameras_0910_0916thru0921.mat')
 
 U_camera = uOCM; %this is the cross-shore (perpendicular to the shore velocity measured by the PIV algorithm)
 V_camera = vOCM; %this is the alongshore (parallel to the shore velocity measured by the PIV algorithm)
@@ -28,7 +28,7 @@ Y_camera = yOCM; %this is the local y-coordinate of the flow velocity
 time_camera = tOCM;
 
 % Loading in situ sensor data
-load C:\Users\sebas\Downloads\insitu_swash_0910_0916thru0921.mat
+load('/Users/ciara/Dropbox (MIT)/MIT-WHOI/mini UROP/Data/insitu_swash_0910_0916thru0921.mat')
 u50(u50 == 0 ) = NaN;
 v50(v50 == 0 ) = NaN;
 u60(u60 == 0 ) = NaN;
@@ -63,41 +63,41 @@ u_opt = conv2(uOCMm_opt,smth,'same');
 v_opt = conv2(vOCMm_opt,smth,'same');
 
 
-%PLotting smoothed data
-figure
-hold on 
-pcolor(oceanX,oceanY,oceanSum)
-shading flat
-colormap('gray')
-quiver(X_original, Y_original, u_or, v_or, 'off','filled', 'r')
-quiver(X_camera, Y_camera, u_cam, v_cam, 'off','filled', 'b')
-quiver(X_optimized, Y_optimized, u_opt, v_opt, 'off','filled', 'g')
-quiver(x50,y50,100,100,'off','filled', 'm')
-quiver(x50,y50,mean(u50,'omitnan'),mean(v50,'omitnan'),'off','filled', 'm')
-quiver(x60,y60,mean(u60,'omitnan'),mean(v60,'omitnan'),'off','filled', 'm')
-quiver(x70,y70,mean(u70,'omitnan'),mean(v70,'omitnan'),'off','filled', 'm')
-daspect([1 1 1]);
-xlabel("Local x coordinate of the flow velocity")
-ylabel("Local y coordinate of the flow velocity")
-title('Comparison of smoothed current velocity data from different mediums')
-legend('','Original','Camera', 'Optimized', 'Sensor')
-export_fig fig_smoothed_data_comparison.png
+xs = [x50; x60; x70];
+ys = [y50; y60; y70];
+us = [mean(u50,'omitnan'); mean(u60,'omitnan'); mean(u70,'omitnan')];
+vs = [mean(v50,'omitnan'); mean(v60,'omitnan'); mean(v70,'omitnan')];
+sf = 10;
 
-%PLotting unsmoothed data
+%recommended plot #1
 figure
 hold on 
 pcolor(oceanX,oceanY,oceanSum)
 shading flat
 colormap('gray')
-quiver(X_original, Y_original, uOCMm_or, vOCMm_or, 1.5,'filled', 'r')
-quiver(X_camera, Y_camera, uOCMm_cam, vOCMm_cam, 1.5,'filled', 'b')
-quiver(X_optimized, Y_optimized, uOCMm_opt, vOCMm_opt,1.5, 'filled', 'g')
-quiver(x50,y50,mean(u50,'omitnan'),mean(v50,'omitnan'),'off','filled', 'm')
-quiver(x60,y60,mean(u60,'omitnan'),mean(v60,'omitnan'),1.5,'filled', 'm')
-quiver(x70,y70,mean(u70,'omitnan'),mean(v70,'omitnan'),1.5,'filled', 'm')
+ax = gca;
+quiver(X_camera, Y_camera, u_cam*sf, v_cam*sf,'off','Color','blue')
+quiver(X_original, Y_original, u_or*sf, v_or*sf,'off','Color','red')
+quiver(xs,ys,us*sf,vs*sf,'off','Color','magenta','MaxHeadSize',0.07)
 daspect([1 1 1]);
-xlabel("Local x coordinate of the flow velocity")
-ylabel("Local y coordinate of the flow velocity")
-title('Comparison of unsmoothed current velocity data from different mediums')
-legend('','Original','Camera', 'Optimized', 'Sensor')
-export_fig fig_unsmoothed_data_comparison.png
+xlabel("Cross-shore coordinate (m)")
+ylabel("Alongshore coordinate (m)")
+title('5-min Mean Remotely Sensed and In Situ Flows in the Swash Zone')
+legend('','Fixed camera','Drone camera','In situ sensor')
+%export_fig fig_smoothed_data_comparison.png
+
+%recommended plot #2
+figure
+hold on 
+pcolor(oceanX,oceanY,oceanSum)
+shading flat
+colormap('gray')
+quiver(X_optimized, Y_optimized, uOCMm_opt*sf, vOCMm_opt*sf,'off','Color', 'green')
+quiver(X_original, Y_original, u_or*sf, v_or*sf,'off','Color','red')
+quiver(xs,ys,us*sf,vs*sf,'off','Color','magenta','MaxHeadSize',0.07)
+daspect([1 1 1]);
+xlabel("Cross-shore coordinate (m)")
+ylabel("Alongshore coordinate (m)")
+title('Comparison of Varied Algorithm Parameters in the Swash Zone')
+legend('','High resolution parameters','Low resolution parameters','In situ sensor')
+%export_fig fig_unsmoothed_data_comparison.png
