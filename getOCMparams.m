@@ -7,17 +7,17 @@ if strcmp(ID, 'droneV1')
     paramsOCM.imp_format = 'mp4';
     
     %grid
-    paramsOCM.ocm_freq = 2.5;     %[Hz]
+    paramsOCM.ocm_freq = 2;     %[Hz]
     paramsOCM.X_res = 0.2;   %[m]
     paramsOCM.Y_res = 0.2;   %[m]
-    paramsOCM.X_min = 96.1465;     %CHANGE
-    paramsOCM.X_max = 144.7955;    %CHANGE
-    paramsOCM.Y_min = 575.8030; %CHANGE
-    paramsOCM.Y_max = 649.8901; %CHANGE
+    paramsOCM.X_min = 96;     %CHANGE
+    paramsOCM.X_max = 145;    %CHANGE
+    paramsOCM.Y_min = 576; %CHANGE
+    paramsOCM.Y_max = 650; %CHANGE
     
     %stack
-    paramsOCM.Al_bar = 10;    %[m]
-    paramsOCM.Cs_bar = 10;    %[m]
+    paramsOCM.Al_bar =10;    %[m]
+    paramsOCM.Cs_bar =10;    %[m]
     paramsOCM.X_gap = 3;      %[m]
     paramsOCM.Y_gap = 3;      %[m]
     

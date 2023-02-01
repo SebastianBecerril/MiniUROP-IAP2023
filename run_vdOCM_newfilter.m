@@ -110,6 +110,12 @@ if autoLocate == true
     stack_Ystart = round((((start_Y)-infoOCM.Y_min)/infoOCM.Y_res)+1);
 elseif autoLocate == false
     %do something else
+    %put word doc stuff here
+    start_X = 96.8:3.2:144.8;
+    start_Y = 577.8:3.2:648.2;
+    [xOCM,yOCM] = meshgrid(start_X,start_Y);
+    stack_Xstart = round((((start_X)-infoOCM.X_min)/infoOCM.X_res)+1);
+    stack_Ystart = round((((start_Y)-infoOCM.Y_min)/infoOCM.Y_res)+1);
 end
 
 %fix indexing outside array issues
@@ -163,6 +169,7 @@ for j = 1:length(imp_read)
         samp = round(vdHz/infoOCM.ocm_freq);
         frms = 1:samp:vd.NumFrames;
         M = length(frms);
+       
 
         %load in each image and interpolate to grid
         ocean = NaN(size(oceanGrid,1),size(oceanGrid,2),M); %preallocate ocean array
@@ -180,6 +187,7 @@ for j = 1:length(imp_read)
         oceanSum = sum(ocean,3);
         
         %save results
+
         save(strcat(infoOCM.workingDir,'/timex_OCM_',infoOCM.tag,'_',imp_name{j}(1:end-4),'.mat'),'oceanSum','oceanX','oceanY')
     end
     
@@ -253,10 +261,11 @@ for j = 1:length(imp_read)
     Smask_Cs(FKind_Cs) = 1;
     
     Nb = floor((size(stkCs_cell{1},1)-(Twin-Tstep))/Tstep); %blocks
+
+    start_time = datetime('09/10/2021 09:16:15','InputFormat','MM/dd/uuuu HH:mm:ss','TimeZone','America/New_York');
     
     %finalize time    
-    tOCM_i = seconds((infoOCM.stp:infoOCM.stp:(infoOCM.stp*Nb)));
-    
+    tOCM_i = start_time + seconds((infoOCM.stp:infoOCM.stp:(infoOCM.stp*Nb)));    
     
     %% GENERATE RESULTS
     minvar = infoOCM.minvar;
